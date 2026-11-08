@@ -2,7 +2,7 @@
 
 A browser-based tool for extracting recoverable response bodies from HTTP Archive (HAR) files into a downloadable ZIP.
 
-**Live site:** https://sspeth000.github.io/hardecompiler/  
+**GitHub Pages URL (after enabling Pages):** https://sspeth000.github.io/hardecompiler/  
 **Repository:** https://github.com/sspeth000/hardecompiler
 
 ## Features
@@ -26,6 +26,10 @@ A browser-based tool for extracting recoverable response bodies from HTTP Archiv
 ## Important limitation
 
 A HAR can record a request without embedding its response body. This tool can only recover content that is actually present in `log.entries[].response.content.text`. Entries without an embedded body are listed as skipped in the report. It does not re-request missing resources from the original website.
+
+## Enable deployment
+
+In the repository, open **Settings → Pages** and set the build and deployment source to **GitHub Actions**. The included workflow then deploys the static site automatically on pushes to `main`.
 
 ## Development
 
