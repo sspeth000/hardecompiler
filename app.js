@@ -162,13 +162,33 @@
     generatedZip = null;
   }
 
-  function acceptFile(file) {
+  async function acceptFile(file) {
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".har") && file.type !== "application/json") {
-      alert("Please choose a .har file (JSON format).");
-      return;
+
+    try {
+      const raw = await file.text();
+      let har;
+      try {
+        har = JSON.parse(raw);
+      } catch {
+        throw new Error("This file is not valid JSON. Please choose a valid HAR archive.");
+      }
+
+      if (
+        !har ||
+        typeof har !== "object" ||
+        !har.log ||
+        typeof har.log !== "object" ||
+        !Array.isArray(har.log.entries)
+      ) {
+        throw new Error("This JSON file is not a valid HAR archive. A HAR file must contain log.entries.");
+      }
+
+      showSelectedFile(file);
+    } catch (error) {
+      alert(error && error.message ? error.message : "This file could not be read. Please choose a valid HAR archive.");
+      fileInput.value = "";
     }
-    showSelectedFile(file);
   }
 
   async function extractHar() {
