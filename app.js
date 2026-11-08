@@ -185,7 +185,7 @@
       let har;
       try {
         // Some HAR exporters prepend a UTF-8 BOM, which JSON.parse does not accept.
-        har = JSON.parse(raw.replace(/^\\uFEFF/, ""));
+        har = JSON.parse(raw.replace(/^\uFEFF/, ""));
       } catch (error) {
         const detail = error && error.message ? error.message : "Unknown JSON parsing error.";
         throw new Error("Could not parse " + selectedHar.name + " as JSON: " + detail);
