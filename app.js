@@ -42,9 +42,9 @@
 
   function safeSegment(value) {
     return String(value || "")
-      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
-      .replace(/\.{2,}/g, ".")
-      .replace(/^\.+$/, "_")
+      .replace(/[<>:"/\\\\|?*\\x00-\\x1f]/g, "_")
+      .replace(/\\.{2,}/g, ".")
+      .replace(/^\\.+$/, "_")
       .trim() || "_";
   }
 
@@ -52,7 +52,7 @@
     try {
       const pathname = new URL(url).pathname;
       const last = pathname.split("/").filter(Boolean).pop() || "";
-      const match = last.match(/\.([a-z0-9]{1,10})$/i);
+      const match = last.match(/\\.([a-z0-9]{1,10})$/i);
       return match ? match[1].toLowerCase() : "";
     } catch {
       return "";
@@ -72,7 +72,7 @@
 
     const segments = url.pathname.split("/").filter(Boolean).map(safeSegment);
     let filename = segments.pop() || "index";
-    if (!/\.[a-z0-9]{1,10}$/i.test(filename)) {
+    if (!/\\.[a-z0-9]{1,10}$/i.test(filename)) {
       const mime = normalizeMime(entry.response && entry.response.content && entry.response.content.mimeType);
       const ext = MIME_EXTENSIONS[mime] || "bin";
       filename += "." + ext;
@@ -85,7 +85,7 @@
   }
 
   function decodeBase64(value) {
-    const cleaned = String(value).replace(/\s/g, "");
+    const cleaned = String(value).replace(/\\s/g, "");
     const binary = atob(cleaned);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -97,14 +97,12 @@
     if (content.encoding === "base64") return decodeBase64(body);
     if (typeof body !== "string") return null;
 
-    // Some HAR producers put a data URL in an otherwise plain-text body.
-    const dataUrl = body.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/i);
+    const dataUrl = body.match(/^data:([^;,]+)?(;base64)?,([\\s\\S]*)$/i);
     if (dataUrl) {
       if (dataUrl[2]) return decodeBase64(dataUrl[3]);
       return new TextEncoder().encode(decodeURIComponent(dataUrl[3]));
     }
 
-    // Plain HAR response text is UTF-8 text unless explicitly marked base64.
     return new TextEncoder().encode(body);
   }
 
@@ -162,33 +160,10 @@
     generatedZip = null;
   }
 
-  async function acceptFile(file) {
+  // Accept any file here. Parsing and structural errors are handled by extractHar().
+  function acceptFile(file) {
     if (!file) return;
-
-    try {
-      const raw = await file.text();
-      let har;
-      try {
-        har = JSON.parse(raw);
-      } catch {
-        throw new Error("This file is not valid JSON. Please choose a valid HAR archive.");
-      }
-
-      if (
-        !har ||
-        typeof har !== "object" ||
-        !har.log ||
-        typeof har.log !== "object" ||
-        !Array.isArray(har.log.entries)
-      ) {
-        throw new Error("This JSON file is not a valid HAR archive. A HAR file must contain log.entries.");
-      }
-
-      showSelectedFile(file);
-    } catch (error) {
-      alert(error && error.message ? error.message : "This file could not be read. Please choose a valid HAR archive.");
-      fileInput.value = "";
-    }
+    showSelectedFile(file);
   }
 
   async function extractHar() {
@@ -207,10 +182,10 @@
       const raw = await selectedHar.text();
       let har;
       try { har = JSON.parse(raw); }
-      catch { throw new Error("This file is not valid HAR/JSON. Try exporting the capture again."); }
+      catch { throw new Error("Could not parse this file as JSON. If it is a text file, make sure it contains the raw HAR JSON."); }
 
       const entries = har && har.log && Array.isArray(har.log.entries) ? har.log.entries : null;
-      if (!entries) throw new Error("The JSON file does not contain a valid HAR log.entries array.");
+      if (!entries) throw new Error("The parsed JSON does not contain a HAR log.entries array.");
 
       const zip = new JSZip();
       const usedPaths = new Set();
@@ -240,7 +215,7 @@
           const bytes = bodyToBytes(content);
           if (!bytes) throw new Error("Unsupported response body representation.");
           let path = pathFromEntry(entry, i, keepPaths);
-          if (!/\.[a-z0-9]{1,10}$/i.test(path)) {
+          if (!/\\.[a-z0-9]{1,10}$/i.test(path)) {
             const ext = MIME_EXTENSIONS[mime] || (TEXT_MIME_PREFIXES.some(prefix => mime.startsWith(prefix)) ? "txt" : "bin");
             path += "." + ext;
           }
@@ -264,16 +239,16 @@
       }
 
       if ($("includeReport").checked) {
-        const csv = reportRows.map(row => row.map(csvEscape).join(",")).join("\r\n");
+        const csv = reportRows.map(row => row.map(csvEscape).join(",")).join("\\r\\n");
         zip.file("_har-decompiler-report.csv", csv);
         zip.file("_har-decompiler-summary.txt",
-          "HAR Decompiler extraction report\n" +
-          "Source: " + selectedHar.name + "\n" +
-          "Entries scanned: " + entries.length + "\n" +
-          "Files extracted: " + extracted + "\n" +
-          "Entries skipped: " + skipped + "\n" +
-          "Recovered bytes: " + totalBytes + "\n\n" +
-          "Skipped entries generally have no embedded response body, or contain a body that could not be decoded.\n");
+          "HAR Decompiler extraction report\\n" +
+          "Source: " + selectedHar.name + "\\n" +
+          "Entries scanned: " + entries.length + "\\n" +
+          "Files extracted: " + extracted + "\\n" +
+          "Entries skipped: " + skipped + "\\n" +
+          "Recovered bytes: " + totalBytes + "\\n\\n" +
+          "Skipped entries generally have no embedded response body, or contain a body that could not be decoded.\\n");
       }
 
       setProgress(82, "Building ZIP archive…");
@@ -303,7 +278,7 @@
     if (!generatedZip) return;
     const url = URL.createObjectURL(generatedZip);
     const anchor = document.createElement("a");
-    const baseName = selectedHar ? selectedHar.name.replace(/\.har$/i, "") : "har-export";
+    const baseName = selectedHar ? selectedHar.name.replace(/\\.har$/i, "") : "har-export";
     anchor.href = url;
     anchor.download = (baseName || "har-export") + "-extracted.zip";
     document.body.appendChild(anchor);
