@@ -183,8 +183,13 @@
     try {
       const raw = await selectedHar.text();
       let har;
-      try { har = JSON.parse(raw); }
-      catch { throw new Error("This file is not valid HAR/JSON. Try exporting the capture again."); }
+      try {
+        // Some HAR exporters prepend a UTF-8 BOM, which JSON.parse does not accept.
+        har = JSON.parse(raw.replace(/^\\uFEFF/, ""));
+      } catch (error) {
+        const detail = error && error.message ? error.message : "Unknown JSON parsing error.";
+        throw new Error("Could not parse " + selectedHar.name + " as JSON: " + detail);
+      }
 
       const entries = har && har.log && Array.isArray(har.log.entries) ? har.log.entries : null;
       if (!entries) throw new Error("The JSON file does not contain a valid HAR log.entries array.");
