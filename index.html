@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131c">
+  <meta name="description" content="Extract recoverable files from HTTP Archive (HAR) files directly in your browser.">
+  <title>HAR Decompiler</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="HAR Decompiler home">
+        <span class="brand-mark">H</span>
+        <span>HAR<span class="brand-light">Decompiler</span></span>
+      </a>
+      <a class="github-link" href="https://github.com/sspeth000/hardecompiler" target="_blank" rel="noreferrer">View on GitHub <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow"><span class="status-dot"></span> LOCAL · PRIVATE · OPEN SOURCE</div>
+      <h1>Unpack the web.<br><span>One HAR at a time.</span></h1>
+      <p class="intro">Turn a browser network archive into a ZIP of its recoverable files. Images, scripts, stylesheets, fonts, documents, and more.</p>
+    </section>
+
+    <section class="workspace" aria-label="HAR extraction">
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Choose or drop a HAR file">
+        <div class="upload-icon" aria-hidden="true">⇧</div>
+        <h2>Drop your HAR file here</h2>
+        <p>or <button id="browseButton" class="text-button" type="button">browse files</button></p>
+        <span class="file-hint">.har · JSON archive</span>
+        <input id="fileInput" type="file" accept=".har,application/json" hidden>
+      </div>
+
+      <div id="selectedFile" class="selected-file hidden">
+        <span class="file-symbol">▤</span>
+        <div class="file-meta"><strong id="fileName">capture.har</strong><span id="fileSize"></span></div>
+        <button id="removeFile" class="icon-button" type="button" aria-label="Remove selected file">×</button>
+      </div>
+
+      <div class="options">
+        <label class="check-option"><input id="keepPaths" type="checkbox" checked> <span>Recreate folders from request URLs</span></label>
+        <label class="check-option"><input id="includeReport" type="checkbox" checked> <span>Include extraction report</span></label>
+      </div>
+
+      <button id="extractButton" class="primary-button" type="button" disabled>
+        <span>Extract files</span><span aria-hidden="true">→</span>
+      </button>
+      <p class="privacy-note"><span aria-hidden="true">◈</span> Your HAR is processed locally. It is never uploaded.</p>
+
+      <div id="progressWrap" class="progress-wrap hidden" aria-live="polite">
+        <div class="progress-label"><span id="progressText">Preparing archive…</span><span id="progressPercent">0%</span></div>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      </div>
+
+      <section id="results" class="results hidden" aria-live="polite">
+        <div class="results-heading"><div><span class="eyebrow">EXTRACTION COMPLETE</span><h2>Your files are ready.</h2></div><span class="success-mark">✓</span></div>
+        <div class="stats">
+          <div class="stat"><strong id="extractedCount">0</strong><span>Extracted</span></div>
+          <div class="stat"><strong id="skippedCount">0</strong><span>Skipped</span></div>
+          <div class="stat"><strong id="totalBytes">0 B</strong><span>Recovered</span></div>
+        </div>
+        <div id="resultNote" class="result-note"></div>
+        <button id="downloadButton" class="primary-button" type="button"><span>Download ZIP</span><span aria-hidden="true">↓</span></button>
+        <button id="resetButton" class="secondary-button" type="button">Extract another HAR</button>
+      </section>
+    </section>
+
+    <section class="how-it-works">
+      <h2>What gets recovered?</h2>
+      <div class="feature-grid">
+        <article><span class="feature-icon">▧</span><h3>Binary assets</h3><p>PNG, JPEG, WebP, GIF, fonts, and other binary response bodies.</p></article>
+        <article><span class="feature-icon">{ }</span><h3>Web resources</h3><p>JavaScript, CSS, HTML, JSON, XML, and text responses.</p></article>
+        <article><span class="feature-icon">⌁</span><h3>Organized output</h3><p>URL-based folders, safe filenames, duplicate handling, and a recovery report.</p></article>
+      </div>
+      <p class="caveat">A HAR only contains response bodies that were captured and included when it was exported. Missing or omitted bodies cannot be reconstructed by this tool.</p>
+    </section>
+
+    <footer><span>HAR Decompiler</span><span>Runs entirely in your browser · <a href="https://github.com/sspeth000/hardecompiler" target="_blank" rel="noreferrer">Source code</a></span></footer>
+  </main>
+</body>
+</html>
