@@ -181,14 +181,26 @@
     setProgress(3, "Reading HAR archive…");
 
     try {
-      const raw = await selectedHar.text();
+      // Read the selected file as UTF-8 directly from its bytes.
+      const buffer = await selectedHar.arrayBuffer();
+      const raw = new TextDecoder("utf-8").decode(buffer);
       let har;
       try {
         // Some HAR exporters prepend a UTF-8 BOM, which JSON.parse does not accept.
         har = JSON.parse(raw.replace(/^\uFEFF/, ""));
       } catch (error) {
         const detail = error && error.message ? error.message : "Unknown JSON parsing error.";
-        throw new Error("Could not parse " + selectedHar.name + " as JSON: " + detail);
+        const positionMatch = detail.match(/position (\d+)/i);
+        const position = positionMatch ? Number(positionMatch[1]) : -1;
+        const excerpt = position >= 0
+          ? raw.slice(Math.max(0, position - 80), Math.min(raw.length, position + 80))
+          : "";
+        const fileInfo = selectedHar.name + " (" + formatBytes(selectedHar.size) + ")";
+        throw new Error(
+          "Could not parse " + fileInfo + " as JSON: " + detail +
+          (excerpt ? "\\n\\nText near the error:\\n" + JSON.stringify(excerpt) : "") +
+          "\\n\\nIf this file is valid in another JSON parser, verify that the selected file is the same copy."
+        );
       }
 
       const entries = har && har.log && Array.isArray(har.log.entries) ? har.log.entries : null;
